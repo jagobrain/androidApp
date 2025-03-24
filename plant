@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .form-group input[type="file"] {
+            padding: 5px;
+        }
+        .form-group img {
+            max-width: 100px;
+            max-height: 100px;
+            margin-top: 10px;
+            border-radius: 4px;
+        }
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 150px; /* Фиксированная ширина */
+            margin: 5px auto; /* Центрирование */
+            display: block; /* Чтобы кнопки занимали всю ширину */
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+        .btn-danger {
+            background-color: #f44336;
+        }
+        .btn-danger:hover {
+            background-color: #d32f2f;
+        }
+        .plants-list {
+            margin-top: 20px;
+        }
+        .plants-list select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Менеджер растений</h1>
+    <div class="container">
+        <!-- Форма для добавления растения -->
+        <div class="form-group">
+            <label for="plantName">Название растения:</label>
+            <input type="text" id="plantName" placeholder="Введите название">
+        </div>
+        <div class="form-group">
+            <label for="wateringDate">Дата полива:</label>
+            <input type="date" id="wateringDate">
+        </div>
+        <div class="form-group">
+            <label for="fertilizingDate">Дата подкормки:</label>
+            <input type="date" id="fertilizingDate">
+        </div>
+        <div class="form-group">
+            <label for="plantImage">Фото растения:</label>
+            <input type="file" id="plantImage" accept="image/*">
+            <img id="previewImage" src="#" alt="Превью фото" style="display: none;">
+        </div>
+        <button class="btn" onclick="addPlant()">Добавить растение</button>
+
+        <!-- Список растений -->
+        <div class="plants-list">
+            <label for="plantsDropdown">Список растений:</label>
+            <select id="plantsDropdown" onchange="loadPlant()"></select>
+        </div>
+
+        <!-- Кнопка удалить -->
+        <button class="btn btn-danger" onclick="deletePlant()">Удалить</button>
+    </div>
+
+    <script>
+        let plants = JSON.parse(localStorage.getItem('plants')) || [];
+
+        // Функция для добавления растения
+        function addPlant() {
+            const name = document.getElementById('plantName').value;
+            const wateringDate = document.getElementById('wateringDate').value;
+            const fertilizingDate = document.getElementById('fertilizingDate').value;
+            const imageFile = document.getElementById('plantImage').files[0];
+
+            if (!name || !wateringDate || !fertilizingDate || !imageFile) {
+                alert('Заполните все поля и загрузите фото!');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const plant = {
+                    id: Date.now(),
+                    name,
+                    wateringDate,
+                    fertilizingDate,
+                    image: e.target.result
+                };
+
+                plants.push(plant);
+                localStorage.setItem('plants', JSON.stringify(plants));
+                updateDropdown();
+                clearForm();
+            };
+            reader.readAsDataURL(imageFile);
+        }
+
+        // Функция для обновления выпадающего списка
+        function updateDropdown() {
+            const dropdown = document.getElementById('plantsDropdown');
+            dropdown.innerHTML = '';
+            plants.forEach(plant => {
+                const option = document.createElement('option');
+                option.value = plant.id;
+                option.textContent = plant.name;
+                dropdown.appendChild(option);
+            });
+        }
+
+        // Функция для загрузки данных выбранного растения
+        function loadPlant() {
+            const dropdown = document.getElementById('plantsDropdown');
+            const selectedId = dropdown.value;
+            const plant = plants.find(p => p.id == selectedId);
+
+            if (plant) {
+                document.getElementById('plantName').value = plant.name;
+                document.getElementById('wateringDate').value = plant.wateringDate;
+                document.getElementById('fertilizingDate').value = plant.fertilizingDate;
+                document.getElementById('previewImage').src = plant.image;
+                document.getElementById('previewImage').style.display = 'block';
+            }
+        }
+
+        // Функция для удаления растения
+        function deletePlant() {
+            const dropdown = document.getElementById('plantsDropdown');
+            const selectedId = dropdown.value;
+
+            if (!selectedId) {
+                alert('Выберите растение для удаления!');
+                return;
+            }
+
+            plants = plants.filter(plant => plant.id != selectedId);
+            localStorage.setItem('plants', JSON.stringify(plants));
+            updateDropdown();
+            clearForm();
+            alert('Растение удалено!');
+        }
+
+        // Функция для очистки формы
+        function clearForm() {
+            document.getElementById('plantName').value = '';
+            document.getElementById('wateringDate').value = '';
+            document.getElementById('fertilizingDate').value = '';
+            document.getElementById('plantImage').value = '';
+            document.getElementById('previewImage').style.display = 'none';
+        }
+
+        // Превью изображения
+        document.getElementById('plantImage').addEventListener('change', function (e) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                document.getElementById('previewImage').src = e.target.result;
+                document.getElementById('previewImage').style.display = 'block';
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        });
+
+        // Инициализация выпадающего списка при загрузке страницы
+        updateDropdown();
+    </script>
+</body>
+</html>
